@@ -1,0 +1,14 @@
+<div class="navbar">
+    <img class="navbar__logo">
+    {{#if auth}}
+        <button class="navbar__left-button" id="ships-button">Рейсы</button>
+        <button class="navbar__left-button" id="cars-button">Автопарк</button>
+    {{/if}}
+    <div class="navbar__right-elements">
+        {{#if auth}}
+            <button class="navbar__exit-button" id="exit-btn">Выйти</button>
+        {{else}}
+            <button class="navbar__exit-button" id="login-btn">Войти</button>
+        {{/if}}
+    </div>
+</div>

@@ -1,0 +1,13 @@
+<div class="car">
+    <div class="car__img-block">
+        <img class="car__img" src="{{this.image}}">
+    </div>
+    <div class="car__data">
+        <div class="car__plate">
+            {{>plate this.lPlate}}
+        </div>
+    </div>
+    <div class="car__data-text">
+        {{this.model}} {{this.sType}} Мест: {{this.load}}
+    </div>
+</div>

@@ -1,0 +1,36 @@
+.car {
+  width: calc( ((100vw - 30px) / 4) - 24px);
+  height: fit-content;
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid gray;
+
+  &__img-block > img {
+    width: 100%;
+    height: 220px;
+    border-top-right-radius: 12px;
+    border-top-left-radius: 12px;
+  }
+
+  &__plate {
+    display: inline-block;
+    margin-left: 45px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  &__data-text {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    position: relative;
+    color: gray;
+    text-align: center;
+  }
+}
+
+@media (max-width: 760px) {
+  .car {
+    width: 100vw !important;
+  }
+}

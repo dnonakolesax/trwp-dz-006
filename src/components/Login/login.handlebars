@@ -1,0 +1,19 @@
+<div class="login-page">
+    <div class="login-page__input">
+        <p class="login-page__input-entry-text">Вход</p>
+        <div class="login-page__error-text" style="color: red;"></div>
+        <form action="login" method="post" class="login-page__input-form">
+            <div style="display: flex; flex-direction:column; gap:15px;">
+                <input class="login-page__input-login" placeholder="Логин" id="login" name="login" required/>
+                <div class="login-page__passin">
+                    <input type="password" class="login-page__input-password" placeholder="Пароль" id="password"
+                           name="password" required/>
+                    <span class="login-page__pass-icon_show" id="hide-pass"></span>
+                </div>
+            </div>
+            <div class="login-page__input-buttons">
+                <button class="login-page__input-login-button">Войти</button>
+            </div>
+        </form>
+    </div>
+</div>
