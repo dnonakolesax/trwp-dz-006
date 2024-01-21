@@ -2,6 +2,9 @@ const authRequests = require("../requests/authRequests");
 
 const logger = require('../logger');
 
+const MAX_BD_REQUESTS = 10;
+const MAX_BD_REQUESTS_TIMEOUT = 10;
+
 /**
  * Промежуточные обработчики
  */
@@ -11,11 +14,16 @@ class Middlewares {
      */
     async isAuthorised (req, res, next) {
         try {
-            const isAuth = await authRequests.isAuthorised(req.cookies.session_id);
-            if (!isAuth) {
-                res.sendStatus(401);
+            const spam = await authRequests.checkSpam(`entries-${req.cookies.session_id}`, MAX_BD_REQUESTS, MAX_BD_REQUESTS_TIMEOUT);
+            if (spam) {
+                res.sendStatus(429);
             } else {
-                next();
+                const isAuth = await authRequests.isAuthorised(req.cookies.session_id);
+                if (!isAuth) {
+                    res.sendStatus(401);
+                } else {
+                    next();
+                }
             }
         } catch (e) {
             console.log(e);

@@ -5,7 +5,7 @@
   background-color: white;
   border-radius: 12px;
   height: fit-content;
-  width: calc( ((100vw - 30px) / 4) - 67px );
+  width: calc( ((100vw - 60px + 20px) / 4) - 60px );
   padding: 20px;
   text-align:center;
   position: relative;
@@ -61,4 +61,14 @@
   }
 }
 
+@media (max-width: 1350px) and (min-width:1101px) {
+  .shipment {
+    width: calc( ((100vw - 60px + 20px) / 3) - 60px ) !important;
+  }
+}
+@media (max-width: 1100px) and (min-width:761px) {
+  .shipment {
+    width: calc( ((100vw - 60px + 20px) / 2) - 60px ) !important;
+  }
+}
 

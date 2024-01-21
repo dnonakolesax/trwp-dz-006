@@ -1,4 +1,5 @@
 export const MIN_FAIL_RESPONSE = 400;
+export const TIMEOUT_RESPONSE = 429;
 
 export const LOGIN_URL = '/login';
 export const AUTOPARK_URL = '/autopark';
@@ -14,7 +15,7 @@ export const DRAGEND_EVENT = 'dragend';
 
 export const TOUCHSTART_EVENT = 'touchstart';
 export const TOUCHMOVE_EVENT = 'touchmove';
-export const TOUCHEND_EVENT = 'touchover';
+export const TOUCHEND_EVENT = 'touchend';
 
 export const CHANGE_EVENT = 'change';
 export const INPUT_EVENT = 'input';

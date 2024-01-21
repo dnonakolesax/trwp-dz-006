@@ -1,3 +1,5 @@
+import {TIMEOUT_RESPONSE} from "@configs/common_config";
+
 const noBodyRequests = ['GET', 'HEAD'];
 const UNAUTHORISED_CODE = 401;
 
@@ -40,6 +42,9 @@ export class Requests {
         data: responseJson,
       };
     } catch (e) {
+      if ((response.status === TIMEOUT_RESPONSE) && (window.location.pathname !== '/login')) {
+        alert('Превышен лимит запросов к базе данных');
+      }
       return {
         status: response.status,
         data: null,

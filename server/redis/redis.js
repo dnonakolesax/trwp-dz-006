@@ -93,12 +93,16 @@ class redisAdapter {
      * Установка пары ключ-значение
      * @param key - ключ
      * @param value - значение
+     * @param expires - длительность хранения ключа (1 день по умолчанию, -1 - не задавать)
      */
-    async set(key, value) {
+    async set(key, value, expires = 86400) {
         logger.logRedisQuery('set', key, value);
         try {
             await this.connect();
-            await this.redisClient.set(key, value, {EX: 86400});
+            await this.redisClient.set(key, value);
+            if (expires > 0) {
+                await this.redisClient.expire(key, Number(expires));
+            }
         } catch (e) {
             logger.logRedisError(e.toString());
             throw e;
@@ -138,6 +142,23 @@ class redisAdapter {
         try {
             await this.connect();
             await this.redisClient.del(key);
+        } catch (e) {
+            logger.logRedisError(e.toString());
+            throw e;
+        } finally {
+            await this.disconnect();
+        }
+    }
+
+    /**
+     * Увелечение значения на 1
+     * @param key - ключ
+     */
+    async incr(key) {
+        logger.logRedisQuery('incr', key);
+        try {
+            await this.connect();
+            await this.redisClient.incr(key);
         } catch (e) {
             logger.logRedisError(e.toString());
             throw e;

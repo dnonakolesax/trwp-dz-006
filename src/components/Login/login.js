@@ -19,6 +19,7 @@ const ATTRIBUTE_TYPE = 'type';
 const TYPE_TEXT = 'text';
 const TYPE_PASSWORD = 'password';
 
+const LOGIN_TIMEOUT_ERROR_TEXT = 'Слишком много попыток неправильного входа. Попробуйте через 10 минут.';
 const LOGIN_ERROR_TEXT = 'Неправильный логин или пароль';
 
 /**
@@ -51,7 +52,11 @@ export default async () => {
     const result = await api.login(login.value, pass.value);
     if (result.status >= MIN_FAIL_RESPONSE) {
       const err = document.querySelector(ERROR_TEXT_CLASS);
-      err.textContent = LOGIN_ERROR_TEXT;
+      if (result.status === 429) {
+        err.textContent = LOGIN_TIMEOUT_ERROR_TEXT;
+      } else {
+        err.textContent = LOGIN_ERROR_TEXT;
+      }
       return;
     }
     await navbar(true);

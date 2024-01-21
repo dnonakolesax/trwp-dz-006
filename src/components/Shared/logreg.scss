@@ -1,7 +1,7 @@
 /**
 На будущее чтобы шарить стили с регистрацией
  */
-
+@import "@components/Shared/common.scss";
 
 @mixin log-reg-page {
   width: fit-content;
@@ -13,7 +13,7 @@
 }
 
 @mixin log-reg-input {
-  border-color: #FF8362;
+  border-color: $main-color;
   border-width: 10px;
   border-radius: 12px;
   background-color: white;
@@ -26,19 +26,18 @@
 }
 
 @mixin login-field {
-  width: calc(100% - 10px);
+  width: calc(100% - 15px);
   border-radius: 12px;
   border-width: 1px;
-  border-color: #FFB97D;
+  border-color: $main-color;
   height: calc(25px + 2.5vh);
-  margin-right: calc(25px);
   padding-left: 10px;
 }
 
 @mixin password-field {
   border-radius: 12px;
   border-width: 1px;
-  border-color: #FFB97D;
+  border-color: $main-color;
   width: 100%;
   height: calc(25px + 2.5vh);
   padding-left: 10px;
@@ -49,5 +48,6 @@
   font-family: sans-serif;
   font-weight: bold;
   font-size: 28px;
-  color: #D68048;
+  color: black;
+  margin-top: 15px;
 }

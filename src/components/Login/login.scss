@@ -2,13 +2,14 @@
 @import "@components/Shared/logreg.scss";
 
 @mixin pass-icon {
-  margin-left: -30px;
+  margin-left: -35px;
+  margin-right: 10px;
   width: 20px;
   height: 20px;
   border: none;
   cursor: pointer;
   position: relative;
-  top: 50%;
+  top: 57%;
   transform: translate(0, -50%);
 }
 

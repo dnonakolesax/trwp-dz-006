@@ -3,8 +3,12 @@ const sql = require('../db/pgSQL');
 const uuid = require('uuid');
 const {toBase64} = require("request/lib/helpers");
 const setupRequest = require('./setupRequest');
+const {max} = require("pg/lib/defaults");
 
 const authoriseRequestFile = 'auth__authorise.sql';
+
+const AUTH_TIMEOUT = 600; //10 минут
+const AUTH_MAX_ATTEMPTS = 5;
 
 /**
  * Клас запросов типа авторизации
@@ -44,7 +48,7 @@ class authRequests {
                 return -1;
             } else {
                 const uniqueRandomID = toBase64(uuid.v4());
-                await redis.set(uniqueRandomID, data.rows[0].id, {EX: 86400});
+                await redis.set(uniqueRandomID, data.rows[0].id);
                 return uniqueRandomID;
             }
         } catch (e) {
@@ -55,6 +59,28 @@ class authRequests {
     async logout(sessionId) {
         try {
             await redis.del(sessionId);
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    async checkSpam(address, maxAttempts = null, timeout = null) {
+        if (!maxAttempts) {
+            maxAttempts = AUTH_MAX_ATTEMPTS;
+            timeout = AUTH_TIMEOUT;
+        }
+        try {
+            const attempts = Number(await redis.get(address));
+            if (attempts) {
+                if (attempts > Number(maxAttempts)) {
+                    return true;
+                } else {
+                    await redis.incr(address);
+                }
+            } else {
+                await redis.set(address, 1, timeout);
+            }
+            return false;
         } catch (e) {
             throw e;
         }

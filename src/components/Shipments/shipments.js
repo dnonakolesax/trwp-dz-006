@@ -84,7 +84,9 @@ let busyCars = []
 function dragStartListener(event, touch = false) {
     let evt = event.target;
     if (touch) {
-        evt = event.target.parentNode;
+        const lastTouch = evt.changedTouches[evt.changedTouches.length - 1];
+        const pointEls = document.elementsFromPoint(lastTouch.clientX, lastTouch.clientY);
+        evt = pointEls[0].closest(CARGO_CLASS);
     }
     evt.classList.add(CARGO_SELECTED_CLASS);
     evt.dataset.from = evt.parentNode.parentNode.querySelector(SHIPMENT_ID_CLASS).textContent;
@@ -116,7 +118,7 @@ function dragStartListener(event, touch = false) {
     if (touch) {
         const fakeElement = evt.cloneNode(true);
         fakeElement.classList.add(CARGO_SELECTED_FAKE_CLASS);
-        document.getElementById(ROOT_ELEMENT_ID).appendChild(fakeElement);
+        document.getElementById('root').appendChild(fakeElement);
     }
 }
 
@@ -129,9 +131,10 @@ async function okCargoListener(event, list) {
     let done = false;
     Array.from(list.children).forEach((currCargo) => {
         const currCargoVolume = Number(currCargo.querySelector(CARGO_VOLUME_CLASS).textContent);
+        const currCargoCount = Number(currCargo.querySelector(CARGO_AMOUNT_CLASS).textContent);
         const currCargoName = currCargo.querySelector(CARGO_NAME_CLASS).textContent;
         if ((currCargoName === name) && (currCargoVolume === Number(volume))) {
-            currCargo.querySelector(CARGO_AMOUNT_CLASS).textContent = currCargoVolume + Number(volume);
+            currCargo.querySelector(CARGO_AMOUNT_CLASS).textContent = Number(currCargoCount) + Number(count);
             done = true;
         }
     })
@@ -158,7 +161,7 @@ async function okCargoListener(event, list) {
     newCargo.addEventListener(TOUCHSTART_EVENT, (event) => dragStartListener(event, true));
 
     newCargo.addEventListener(DRAGEND_EVENT, (evt) => evt.target.classList.remove(CARGO_SELECTED_CLASS));
-    newCargo.addEventListener(TOUCHEND_EVENT, (evt) => evt.target.parentNode.classList.remove(CARGO_SELECTED_CLASS));
+    newCargo.addEventListener(TOUCHEND_EVENT, (evt) => document.querySelector(CLASS_SELECTOR + CARGO_SELECTED_CLASS).classList.remove(CARGO_SELECTED_CLASS));
 
     const deleteCargoButton = newCargo.querySelector(CARGO_REMOVE_BUTTON_CLASS);
     deleteCargoButton.addEventListener(MOUSE_CLICK_EVENT, (event) => {
@@ -229,8 +232,11 @@ function editShipmentListener(event) {
         const api = new Api()
         const apiResponse = await api.updateShipment(shipment.querySelector(SHIPMENT_ID_CLASS).textContent, destination, selected);
         if (apiResponse.status !== 200) {
-            destination.textContent = oldDestination;
+            shipment.querySelector(DESTINATIONS_ID).value = destination;
             shipment.querySelector(CARS_ID).value = selected;
+            if (apiResponse.status === 429) {
+                evt.target.parentNode.replaceChild(event.target, saveButton);
+            }
         } else {
             evt.target.parentNode.replaceChild(event.target, saveButton);
         }
@@ -323,7 +329,7 @@ function editCargoListener(event) {
 function dragOverListener(event, touch) {
     event.preventDefault();
 
-    let target = null
+    let target = null;
 
 
     const draggedElement = document.querySelector(CLASS_SELECTOR + CARGO_SELECTED_CLASS);
@@ -333,7 +339,7 @@ function dragOverListener(event, touch) {
     }
 
     if (touch) {
-        const moving = document.querySelector(CARGO_SELECTED_FAKE_CLASS);
+        const moving = document.querySelector(CLASS_SELECTOR + CARGO_SELECTED_FAKE_CLASS);
         if (!moving) {
             return;
         }
@@ -344,13 +350,13 @@ function dragOverListener(event, touch) {
             const lastTouch = event.touches[len - 1];
             const pointEls = document.elementsFromPoint(lastTouch.clientX, lastTouch.clientY);
             if (pointEls.length > 0) {
-                target = pointEls[1];
+                target = pointEls[0];
             }
         } else {
             return;
         }
     } else {
-        target = event.target
+        target = event.target;
     }
 
     if (target === null) {
@@ -387,10 +393,14 @@ function dragOverListener(event, touch) {
         }
     }
 
-    if (draggedElement === currentElement) return;
+    if (draggedElement === currentElement) {
+        return;
+    }
 
     if (curDroppable === draggedElementPrevList) {
-        if (!currentElement.matches(CARGO_CLASS)) return;
+        if (!currentElement.matches(CARGO_CLASS)) {
+            return;
+        }
 
         const nextElement = (currentElement === draggedElement.nextElementSibling)
             ? currentElement.nextElementSibling
@@ -422,21 +432,37 @@ function insertChildAtIndex(array, child, index) {
     }
 }
 
-async function onDragEndEvent(evt, api) {
+async function onDragEndEvent(evt, api, touch = false) {
     evt.preventDefault();
     evt.target.classList.remove(CARGO_SELECTED_CLASS);
-    const newShipmentId = evt.target.parentNode.parentNode.querySelector(SHIPMENT_ID_CLASS).textContent;
-    const oldShipmentId = evt.target.dataset.from;
-    const volume = evt.target.querySelector(CARGO_VOLUME_CLASS);
-    const amount = evt.target.querySelector(CARGO_AMOUNT_CLASS);
-    if (newShipmentId !== oldShipmentId) {
-        const moveResult = await api.moveCargo(evt.target.dataset.id, newShipmentId, oldShipmentId, amount, volume);
-        if (moveResult.status !== 200) {
-            evt.target.parentNode.removeChild(evt.target);
-            const oldIdx = Number(evt.target.dataset.child);
-            const list = document.querySelector(`.list-${oldShipmentId}`);
-            insertChildAtIndex(list, evt.target, oldIdx);
+    let target = evt.target;
+    let newShipment;
+    if (touch) {
+        const lastTouch = evt.changedTouches[evt.changedTouches.length - 1];
+        const pointEls = document.elementsFromPoint(lastTouch.clientX, lastTouch.clientY);
+        if (pointEls.length > 0) {
+            newShipment = pointEls[0].closest(SHIPMENT_CLASS);
         }
+        target = evt.target.closest(CARGO_CLASS);
+    } else {
+        newShipment = target.closest(SHIPMENT_CLASS);
+    }
+    const newShipmentId = newShipment.querySelector(SHIPMENT_ID_CLASS).textContent;
+    const oldShipmentId = target.dataset.from;
+    const volume = target.querySelector(CARGO_VOLUME_CLASS);
+    const amount = target.querySelector(CARGO_AMOUNT_CLASS);
+    if (newShipmentId !== oldShipmentId) {
+        const moveResult = await api.moveCargo(target.dataset.id, newShipmentId, oldShipmentId, amount, volume);
+        if (moveResult.status !== 200) {
+            target.parentNode.removeChild(target);
+            const oldIdx = Number(target.dataset.child);
+            const list = document.querySelector(`.list-${oldShipmentId}`);
+            insertChildAtIndex(list, target, oldIdx);
+        }
+    }
+    const cargoSelected = document.querySelector(CLASS_SELECTOR + CARGO_SELECTED_CLASS);
+    if (cargoSelected) {
+        cargoSelected.classList.remove(CARGO_SELECTED_CLASS);
     }
 }
 
@@ -444,7 +470,7 @@ function onShipmentDragEnd(touch = false) {
     const forbidden = document.querySelectorAll(DRAG_FORBIDDEN_CLASS);
     forbidden.forEach((forb) => forb.classList.remove(DRAG_FORBIDDEN_CLASS));
     if (touch) {
-        const fake = document.querySelectorAll(CARGO_SELECTED_FAKE_CLASS);
+        const fake = document.querySelectorAll(CLASS_SELECTOR + CARGO_SELECTED_FAKE_CLASS);
         fake.forEach((fakeEl) => fakeEl.parentNode.removeChild(fakeEl));
     }
     const wrongDestination = document.querySelectorAll(SHIPMENT_DESTINATION_ERROR_CLASS);
@@ -453,15 +479,15 @@ function onShipmentDragEnd(touch = false) {
     wrongLoad.forEach((wl) => wl.style.display = DISPLAY_NONE);
 }
 
-async function newShipment(event, cars,destinations, api) {
+async function newShipment(event, cars, destinations, api) {
     const shipments = document.querySelectorAll(SHIPMENT_CLASS);
     if (cars.length === shipments.length) {
         alert(FREE_CARS_ERROR);
+        return cars;
     } else {
         const newShipment = document.createElement(DIV_ELEMENT);
 
         const sid = uuid.v4();
-        console.log(cars);
         newShipment.innerHTML = shipmentTemplate({cars: cars, destinations: destinations, shipment: {id: sid}});
         const selectCarsList = newShipment.querySelector(CARS_ID);
         const selected = selectCarsList.options[selectCarsList.selectedIndex].value;
@@ -496,7 +522,7 @@ async function newShipment(event, cars,destinations, api) {
     }
 }
 
-async function deleteShipment (event, api) {
+async function deleteShipment(event, api) {
     const shipmentId = event.target.parentNode.querySelector(SHIPMENT_ID_CLASS).textContent;
     const confirmDeleteModal = document.querySelector(CONFIRM_REMOVE_DIALOG_CLASS);
     let modalCopy = confirmDeleteModal.cloneNode(true);
@@ -519,7 +545,7 @@ async function deleteShipment (event, api) {
     })
 }
 
-async function deleteCargo (event, api) {
+async function deleteCargo(event, api) {
     const confirmDeleteModal = document.querySelector(CONFIRM_REMOVE_DIALOG_CLASS);
     let modalCopy = confirmDeleteModal.cloneNode(true);
     confirmDeleteModal.parentNode.replaceChild(modalCopy, confirmDeleteModal);
@@ -549,8 +575,6 @@ const Shipments = async () => {
     const destinations = destinationsResponse.data;
 
 
-
-
     for (let car of cars) {
         for (let sh of exShipments) {
             if (sh.car_plate === car.plate) {
@@ -570,7 +594,7 @@ const Shipments = async () => {
         draggableItem.addEventListener(TOUCHSTART_EVENT, (event) => dragStartListener(event, true));
 
         draggableItem.addEventListener(DRAGEND_EVENT, (evt) => onDragEndEvent(evt, api));
-        draggableItem.addEventListener(TOUCHEND_EVENT, (evt) => evt.target.classList.remove(CARGO_SELECTED_CLASS));
+        draggableItem.addEventListener(TOUCHEND_EVENT, (evt) => onDragEndEvent(evt, api, true));
     });
 
 
@@ -588,7 +612,9 @@ const Shipments = async () => {
 
 
     const newShipmentBtn = document.querySelector(SHIPMENTS_NEW_SHIPMENT_BUTTON_CLASS);
-    newShipmentBtn.addEventListener(MOUSE_CLICK_EVENT, async (event) => {cars = await newShipment(event, cars,destinations, api)});
+    newShipmentBtn.addEventListener(MOUSE_CLICK_EVENT, async (event) => {
+        cars = await newShipment(event, cars, destinations, api)
+    });
 
 
     const editShipmentButtons = document.querySelectorAll(SHIPMENT_EDIT_BUTTON_CLASS);
@@ -604,7 +630,7 @@ const Shipments = async () => {
 
 
     const deleteCargoButtons = document.querySelectorAll(CARGO_REMOVE_BUTTON_CLASS);
-    deleteCargoButtons.forEach((btn) => btn.addEventListener(MOUSE_CLICK_EVENT, (event) => deleteCargo(event, api) ));
+    deleteCargoButtons.forEach((btn) => btn.addEventListener(MOUSE_CLICK_EVENT, (event) => deleteCargo(event, api)));
 
 
     const changeCargoButtons = document.querySelectorAll(CARGO_EDIT_BUTTON_CLASS);
